@@ -44,8 +44,8 @@
           uses: SonarSource/sonarqube-scan-action@v2
           with:
             args: >
-              -Dsonar.projectKey=demo-app
-              -Dsonar.organization=your-org
+              -Dsonar.projectKey=sliepniev
+              -Dsonar.organization=dimaslepnev
               -Dsonar.host.url=https://sonarcloud.io
               -Dsonar.login=${{ secrets.SONAR_TOKEN }}
           env:

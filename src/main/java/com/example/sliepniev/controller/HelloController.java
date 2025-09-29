@@ -22,7 +22,7 @@ public class HelloController {
     }
 
     @GetMapping("/sum")
-    public String sum(@RequestParam int a, @RequestParam int b) {
+    public String sum(@RequestParam double a, @RequestParam double b) {
         return "Result: " + calculatorService.add(a, b);
     }
 }

@@ -32,10 +32,10 @@ class HelloControllerTest {
 
     @Test
     void sumEndpointReturnsCorrectResult() throws Exception {
-        when(calculatorService.add(2, 3)).thenReturn(5);
+        when(calculatorService.add(2, 3)).thenReturn(5.0);
 
         mockMvc.perform(get("/api/sum?a=2&b=3"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Result: 5"));
+                .andExpect(content().string("Result: 5.0"));
     }
 }
