@@ -25,4 +25,9 @@ public class HelloController {
     public String sum(@RequestParam double a, @RequestParam double b) {
         return "Result: " + calculatorService.add(a, b);
     }
+
+    @GetMapping("/sub")
+    public String subtract(@RequestParam double a, @RequestParam double b) {
+        return "Result: " + calculatorService.subtract(a, b);
+    }
 }

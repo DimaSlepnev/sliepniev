@@ -13,4 +13,9 @@ class CalculatorServiceTest {
     void addTwoNumbers() {
         assertEquals(7, calculatorService.add(3, 4));
     }
+
+    @Test
+    void subtractTwoNumbers(){
+        assertEquals(4, calculatorService.subtract(9,5));
+    }
 }
