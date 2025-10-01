@@ -38,4 +38,13 @@ class HelloControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("Result: 5.0"));
     }
+
+    @Test
+    void subtractEndpointReturnsCorrectResult() throws Exception {
+        when(calculatorService.subtract(9, 5)).thenReturn(4.0);
+
+        mockMvc.perform(get("/api/sub?a=9&b=5"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Result: 4.0"));
+    }
 }
