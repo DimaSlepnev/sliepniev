@@ -38,6 +38,7 @@ jobs:
         id: green_ip
         run: |
           aws ec2 wait instance-running --instance-ids "${{ steps.create_ec2.outputs.instance_id }}"
+          sleep 10
           IP=$(aws ec2 describe-instances \
             --instance-ids "${{ steps.create_ec2.outputs.instance_id }}" \
             --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
@@ -52,11 +53,8 @@ jobs:
 
       - name: SSH Deploy to Green instance
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ steps.green_ip.outputs.public_ip }} << EOF
-          sudo yum update -y
-          sudo yum install -y docker git
-          sudo systemctl start docker
-          sudo systemctl enable docker
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ steps.green_ip.outputs.public_ip }} << EOF
+          sudo snap install docker
           
           APP_DIR="/home/ec2-user/app"
           
