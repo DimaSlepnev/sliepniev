@@ -27,7 +27,7 @@ jobs:
               --instance-type "t3.micro" \
               --subnet-id "${{ secrets.EC2_SUBNET }}" \
               --security-group-ids "${{ secrets.EC2_HOST_SG }}" \
-              --key-name "${{ secrets.EC2_SSH_KEY }}" \
+              --key-name "ec2-key" \
               --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=demo-app-green}]" \
               --query "Instances[0].InstanceId" --output text)
             
