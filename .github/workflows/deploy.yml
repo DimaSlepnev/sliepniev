@@ -49,7 +49,7 @@ jobs:
         run: |
           aws elbv2 register-targets \
             --target-group-arn "${{ secrets.TARGET_GROUP_ARN }}" \
-            --targets Id="${{ steps.green_ip.outputs.public_ip }}",Port=8080
+            --targets Id="${{ steps.create_ec2.outputs.instance_id }}",Port=8080
 
       - name: Wait healthy status in Target Group
         run: |
