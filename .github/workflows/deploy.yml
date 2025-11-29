@@ -52,7 +52,7 @@ jobs:
 
       - name: SSH Deploy to Green instance
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ steps.green_ip.outputs.public_ip }} << EOF
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ steps.green_ip.outputs.public_ip }} << EOF
           sudo snap install docker
           
           if [ ! -d "/home/ubuntu/app" ]; then
