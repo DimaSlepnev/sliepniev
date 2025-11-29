@@ -18,4 +18,9 @@ class CalculatorServiceTest {
     void subtractTwoNumbers(){
         assertEquals(4, calculatorService.subtract(9,5));
     }
+
+    @Test
+    void multiplyTwoNumbers(){
+        assertEquals(12, calculatorService.multiply(4,3));
+    }
 }
