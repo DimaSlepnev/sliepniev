@@ -27,7 +27,7 @@ jobs:
               --instance-type "t3.micro" \
               --subnet-id "${{ secrets.EC2_SUBNET }}" \
               --security-group-ids "${{ secrets.EC2_HOST_SG }}" \
-              --key-name "ec2-key" \
+              --key-name "demo-app-key" \
               --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=demo-app-green}]" \
               --query "Instances[0].InstanceId" --output text)
             
@@ -56,13 +56,16 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@${{ steps.green_ip.outputs.public_ip }} << EOF
           sudo snap install docker
           
-          if [ ! -d "/home/ubuntu/app" ]; then
-             git clone ${{ secrets.REPO_URL }} /home/ubuntu/app
+          APP_DIR="/home/ec2-user/app"
+          
+          if [ ! -d "$APP_DIR" ]; then
+            git clone ${{ secrets.REPO_URL }} $APP_DIR
           else
-             cd /home/ubuntu/app && git pull origin master
+            cd $APP_DIR && git pull origin master
           fi
           
-          cd /home/ubuntu/app
+          cd $APP_DIR
+          sudo docker stop demo-app || true
           sudo docker build -t demo-app .
           sudo docker run -d -p 8080:8080 --name demo-app demo-app
           EOF
