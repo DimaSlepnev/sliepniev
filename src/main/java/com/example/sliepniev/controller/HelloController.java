@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 @RestController
 @RequestMapping("/api")
 public class HelloController {
@@ -29,5 +32,11 @@ public class HelloController {
     @GetMapping("/sub")
     public String subtract(@RequestParam double a, @RequestParam double b) {
         return "Result: " + calculatorService.subtract(a, b);
+    }
+
+    @GetMapping("/instance-id")
+    public String identity() throws UnknownHostException {
+        InetAddress addr = InetAddress.getLocalHost();
+        return "Host: " + addr.getHostName() + " | IP: " + addr.getHostAddress();
     }
 }
