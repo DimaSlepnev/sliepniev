@@ -1,29 +1,87 @@
-#name: Deploy to AWS EC2
-#
-#on:
-#  push:
-#    branches: [ master ]
-#
-#jobs:
-#  deploy:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up SSH key
-#        uses: webfactory/ssh-agent@v0.7.0
-#        with:
-#          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-#
-#      - name: Deploy to EC2
-#        run: |
-#          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-#            docker stop demo-app || true
-#            docker rm demo-app || true
-#            docker rmi demo-app || true
-#            cd ~/app
-#            git pull origin master
-#            docker build -t demo-app .
-#            docker run -d -p 8080:8080 --name demo-app demo-app
-#          EOF
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-session-name: github-actions-deploy
+          aws-region: eu-central-1
+
+      - name: Create new EC2 instance
+          id: create_ec2
+          run: |
+            INSTANCE_ID=$(aws ec2 run-instances \
+              --image-id "${{ secrets.AMI_ID }}" \
+              --instance-type "t3.micro" \
+              --subnet-id "${{ secrets.EC2_SUBNET }}" \
+              --security-group-ids "${{ secrets.EC2_HOST_SG }}" \
+              --key-name "$(echo '${{ secrets.EC2_SSH_KEY }}' | head -1 | awk '{print $NF}')" \
+              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=demo-app-green}]" \
+              --query "Instances[0].InstanceId" --output text)
+            
+            echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+            echo "INST_ID=$INSTANCE_ID"
+
+      - name: Wait until start and get IP
+        id: green_ip
+        run: |
+          aws ec2 wait instance-running --instance-ids "${{ steps.create_ec2.outputs.instance_id }}"
+          IP=$(aws ec2 describe-instances \
+            --instance-ids "${{ steps.create_ec2.outputs.instance_id }}" \
+            --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+
+          echo "public_ip=$IP" >> $GITHUB_OUTPUT
+          echo "GREEN_IP=$IP"
+
+      - name: Register in Target Group
+        run: |
+          aws elbv2 register-targets \
+            --target-group-arn "${{ secrets.TARGET_GROUP_ARN }}" \
+            --targets Id="${{ steps.green_ip.outputs.public_ip }}",Port=8080
+
+      name: Wait healthy status in Target Group
+        run: |
+          aws elbv2 wait target-in-service \
+            --target-group-arn "${{ secrets.TARGET_GROUP_ARN }}" \
+            --targets Id="${{ steps.green_ip.outputs.public_ip }}"
+
+      - name: Delivery application to EC2
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: SSH Deploy to Green instance
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ steps.green_ip.outputs.public_ip }} << EOF
+          set -eux
+          sudo systemctl start docker || true
+          sudo systemctl enable docker || true
+          
+          if [ ! -d "/home/ubuntu/app" ]; then
+             git clone ${{ secrets.REPO_URL }} /home/ubuntu/app
+          else
+             cd /home/ubuntu/app && git pull origin master
+          fi
+          
+          cd /home/ubuntu/app
+          docker build -t demo-app .
+          docker run -d -p 8080:8080 --name demo-app demo-app
+          EOF
+
+      - name: Delete old production EC2
+        run: |
+          aws ec2 terminate-instances --instance-ids "${{ secrets.EC2_OLD_ID }}" || true

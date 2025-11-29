@@ -47,4 +47,13 @@ class HelloControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("Result: 4.0"));
     }
+
+    @Test
+    void multiplyEndpointReturnsCorrectResult() throws Exception {
+        when(calculatorService.multiply(4, 6)).thenReturn(24.0);
+
+        mockMvc.perform(get("/api/mult?a=4&b=6"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Result: 24.0"));
+    }
 }
