@@ -1,29 +1,29 @@
-name: Deploy to AWS EC2
-
-on:
-  push:
-    branches: [ master ]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up SSH key
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-
-      - name: Deploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            docker stop demo-app || true
-            docker rm demo-app || true
-            docker rmi demo-app || true
-            cd ~/app
-            git pull origin master
-            docker build -t demo-app .
-            docker run -d -p 8080:8080 --name demo-app demo-app
-          EOF
+#name: Deploy to AWS EC2
+#
+#on:
+#  push:
+#    branches: [ master ]
+#
+#jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Set up SSH key
+#        uses: webfactory/ssh-agent@v0.7.0
+#        with:
+#          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+#
+#      - name: Deploy to EC2
+#        run: |
+#          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+#            docker stop demo-app || true
+#            docker rm demo-app || true
+#            docker rmi demo-app || true
+#            cd ~/app
+#            git pull origin master
+#            docker build -t demo-app .
+#            docker run -d -p 8080:8080 --name demo-app demo-app
+#          EOF
