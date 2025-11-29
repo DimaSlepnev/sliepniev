@@ -27,7 +27,7 @@ jobs:
               --instance-type "t3.micro" \
               --subnet-id "${{ secrets.EC2_SUBNET }}" \
               --security-group-ids "${{ secrets.EC2_HOST_SG }}" \
-              --key-name "demo-app-key" \
+              --key-name "ec2-key" \
               --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=demo-app-green}]" \
               --query "Instances[0].InstanceId" --output text)
             
@@ -38,6 +38,7 @@ jobs:
         id: green_ip
         run: |
           aws ec2 wait instance-running --instance-ids "${{ steps.create_ec2.outputs.instance_id }}"
+          sleep 10
           IP=$(aws ec2 describe-instances \
             --instance-ids "${{ steps.create_ec2.outputs.instance_id }}" \
             --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
@@ -52,22 +53,16 @@ jobs:
 
       - name: SSH Deploy to Green instance
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ steps.green_ip.outputs.public_ip }} << EOF
-          sudo yum update -y
-          sudo yum install -y docker git
-          sudo systemctl start docker
-          sudo systemctl enable docker
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ steps.green_ip.outputs.public_ip }} << EOF
+          sudo snap install docker
           
-          APP_DIR="/home/ec2-user/app"
-          
-          if [ ! -d "$APP_DIR" ]; then
-            git clone ${{ secrets.REPO_URL }} $APP_DIR
+          if [ ! -d "/home/ubuntu/app" ]; then
+             git clone ${{ secrets.REPO_URL }} /home/ubuntu/app
           else
-            cd $APP_DIR && git pull origin master
+             cd /home/ubuntu/app && git pull origin master
           fi
           
-          cd $APP_DIR
-          sudo docker stop demo-app || true
+          cd /home/ubuntu/app
           sudo docker build -t demo-app .
           sudo docker run -d -p 8080:8080 --name demo-app demo-app
           EOF
