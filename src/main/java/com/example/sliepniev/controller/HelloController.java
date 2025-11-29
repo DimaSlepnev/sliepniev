@@ -15,6 +15,8 @@ public class HelloController {
 
     private final CalculatorService calculatorService;
 
+    private final String resultLabel = "Result";
+
     public HelloController(CalculatorService calculatorService) {
         this.calculatorService = calculatorService;
     }
@@ -26,12 +28,17 @@ public class HelloController {
 
     @GetMapping("/sum")
     public String sum(@RequestParam double a, @RequestParam double b) {
-        return "Result: " + calculatorService.add(a, b);
+        return resultLabel + calculatorService.add(a, b);
     }
 
     @GetMapping("/sub")
     public String subtract(@RequestParam double a, @RequestParam double b) {
-        return "Result: " + calculatorService.subtract(a, b);
+        return resultLabel + calculatorService.subtract(a, b);
+    }
+
+    @GetMapping("/mult")
+    public String multiply(@RequestParam double a, @RequestParam double b){
+        return resultLabel + calculatorService.multiply(a, b);
     }
 
     @GetMapping("/instance-id")
