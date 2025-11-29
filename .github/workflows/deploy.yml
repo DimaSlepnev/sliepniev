@@ -20,14 +20,14 @@ jobs:
           aws-region: eu-west-1
 
       - name: Create new EC2 instance
-          id: create_ec2
-          run: |
+        id: create_ec2
+        run: |
             INSTANCE_ID=$(aws ec2 run-instances \
               --image-id "${{ secrets.AMI_ID }}" \
               --instance-type "t3.micro" \
               --subnet-id "${{ secrets.EC2_SUBNET }}" \
               --security-group-ids "${{ secrets.EC2_HOST_SG }}" \
-              --key-name "$(echo '${{ secrets.EC2_SSH_KEY }}' | head -1 | awk '{print $NF}')" \
+              --key-name "${{ secrets.EC2_SSH_KEY }}" \
               --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=demo-app-green}]" \
               --query "Instances[0].InstanceId" --output text)
             
@@ -51,7 +51,7 @@ jobs:
             --target-group-arn "${{ secrets.TARGET_GROUP_ARN }}" \
             --targets Id="${{ steps.green_ip.outputs.public_ip }}",Port=8080
 
-      name: Wait healthy status in Target Group
+      - name: Wait healthy status in Target Group
         run: |
           aws elbv2 wait target-in-service \
             --target-group-arn "${{ secrets.TARGET_GROUP_ARN }}" \
